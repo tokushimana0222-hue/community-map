@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -689,6 +690,117 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(26,39,68,0.15); border-radius: 2px; }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    z-index: 200;
+    padding: 0;
+  }
+  .mobile-nav-inner {
+    display: flex;
+    height: 56px;
+  }
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    background: transparent;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 6px 0;
+  }
+  .mobile-nav-btn.active {
+    color: var(--teal);
+  }
+  .mobile-nav-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ── MOBILE PANEL SYSTEM ── */
+  .mobile-panel {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    body { overflow: hidden; }
+
+    .header { height: 52px; padding: 0 14px; }
+    .logo-text { font-size: 15px; }
+    .logo-sub { font-size: 9px; }
+    .header-badge { font-size: 10px; padding: 3px 10px; }
+
+    .main {
+      flex-direction: column;
+      height: calc(100vh - 52px - 56px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Hide all panels by default on mobile */
+    .sidebar, .detail-panel {
+      display: none;
+      position: fixed;
+      top: 52px;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    /* Map always visible as base */
+    .map-container {
+      position: fixed;
+      top: 52px;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Show active panel */
+    .sidebar.mobile-active,
+    .detail-panel.mobile-active {
+      display: flex;
+    }
+
+    .mobile-nav { display: block; }
+
+    /* Detail panel mobile tweaks */
+    .detail-panel {
+      flex-direction: column;
+    }
+    .detail-hero { padding: 16px; }
+    .detail-name-big { font-size: 18px; }
+    .detail-body { padding: 14px; }
+
+    /* Sidebar mobile tweaks */
+    .sidebar {
+      border-right: none;
+    }
+    .community-list {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -926,7 +1038,7 @@ function renderSidebar() {
         <div class="meter-track-sm"><div class="meter-fill-sm" style="width:${c.meter}%"></div></div>
         <span class="meter-label-sm">交流</span>
       </div>`;
-    card.addEventListener('click', () => selectCommunity(c.id));
+    card.addEventListener('click', () => { selectCommunity(c.id); if(window.innerWidth<=768) setTimeout(()=>showMobilePanel('detail'),100); });
     list.appendChild(card);
   });
 }
@@ -1123,6 +1235,69 @@ autoPopInterval = setInterval(() => {
   const c = communities.find(x => x.id === activeId);
   if (c) showPopComment(c);
 }, 7000);
+
+// Mobile panel switching
+function showMobilePanel(panel) {
+  if (window.innerWidth > 768) return;
+  const sidebar = document.querySelector('.sidebar');
+  const detail = document.getElementById('detailPanel');
+  const navList = document.getElementById('navList');
+  const navMap = document.getElementById('navMap');
+  const navDetail = document.getElementById('navDetail');
+
+  sidebar.classList.remove('mobile-active');
+  detail.classList.remove('mobile-active');
+  navList.classList.remove('active');
+  navMap.classList.remove('active');
+  navDetail.classList.remove('active');
+
+  if (panel === 'list') {
+    sidebar.classList.add('mobile-active');
+    navList.classList.add('active');
+  } else if (panel === 'detail') {
+    detail.classList.add('mobile-active');
+    navDetail.classList.add('active');
+  } else {
+    navMap.classList.add('active');
+  }
+}
+
+// Auto switch to detail on mobile when pin clicked
+const _origSelect = selectCommunity;
+function selectCommunityMobile(id) {
+  _origSelect(id);
+  if (window.innerWidth <= 768) {
+    setTimeout(() => showMobilePanel('detail'), 100);
+  }
+}
+
+// Override click handlers for mobile
+document.querySelectorAll('.pin-wrapper').forEach(pin => {
+  pin.addEventListener('click', () => {
+    const id = pin.id.replace('pin-', '');
+    if (window.innerWidth <= 768) selectCommunityMobile(id);
+  });
+});
+
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn" id="navList" onclick="showMobilePanel('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      リスト
+    </button>
+    <button class="mobile-nav-btn active" id="navMap" onclick="showMobilePanel('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      地図
+    </button>
+    <button class="mobile-nav-btn" id="navDetail" onclick="showMobilePanel('detail')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      詳細
+    </button>
+  </div>
+</nav>
+
 </body>
 </html>
