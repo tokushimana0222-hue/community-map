@@ -801,6 +801,66 @@
     }
   }
 
+
+  /* ── MOBILE SLIDE-IN DETAIL ── */
+  @media (max-width: 768px) {
+    /* Override: detail panel is now a slide-in drawer, not a full-screen panel */
+    .detail-panel {
+      position: fixed !important;
+      top: 52px !important;
+      bottom: 56px !important;
+      right: 0 !important;
+      left: auto !important;
+      width: 88% !important;
+      max-width: 360px !important;
+      transform: translateX(100%) !important;
+      transition: transform 0.3s cubic-bezier(0.34, 1.1, 0.64, 1) !important;
+      box-shadow: -4px 0 24px rgba(26,39,68,0.18) !important;
+      z-index: 150 !important;
+      display: flex !important;
+    }
+    .detail-panel.mobile-active {
+      transform: translateX(0) !important;
+    }
+
+    /* Dim overlay when panel is open */
+    .map-dim {
+      display: none;
+      position: fixed;
+      top: 52px;
+      bottom: 56px;
+      left: 0;
+      right: 0;
+      background: rgba(26,39,68,0.35);
+      z-index: 140;
+    }
+    .map-dim.show { display: block; pointer-events: none; }
+  }
+
+
+  @media (max-width: 768px) {
+    .mobile-close-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10;
+    }
+  }
+  @media (min-width: 769px) {
+    .mobile-close-btn { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -852,7 +912,8 @@
 
   <!-- DETAIL PANEL -->
   <aside class="detail-panel" id="detailPanel">
-    <div class="detail-hero" id="detailHero">
+    <div class="detail-hero" id="detailHero" style="position:relative;">
+      <button class="mobile-close-btn" onclick="closeMobileDetail()">×</button>
       <div class="detail-type-badge" id="detailTypeBadge"></div>
       <div class="detail-name-big" id="detailNameBig">つながり横浜</div>
       <div class="detail-loc-row">
@@ -1241,12 +1302,16 @@ function showMobilePanel(panel) {
   if (window.innerWidth > 768) return;
   const sidebar = document.querySelector('.sidebar');
   const detail = document.getElementById('detailPanel');
+  const dim = document.getElementById('mapDim');
   const navList = document.getElementById('navList');
   const navMap = document.getElementById('navMap');
   const navDetail = document.getElementById('navDetail');
 
-  sidebar.classList.remove('mobile-active');
+  // Always close detail drawer first
   detail.classList.remove('mobile-active');
+  dim.classList.remove('show');
+
+  sidebar.classList.remove('mobile-active');
   navList.classList.remove('active');
   navMap.classList.remove('active');
   navDetail.classList.remove('active');
@@ -1255,8 +1320,9 @@ function showMobilePanel(panel) {
     sidebar.classList.add('mobile-active');
     navList.classList.add('active');
   } else if (panel === 'detail') {
+    // Slide in from right, stay on map
     detail.classList.add('mobile-active');
-    navDetail.classList.add('active');
+    navMap.classList.add('active'); // keep map tab active
   } else {
     navMap.classList.add('active');
   }
@@ -1279,8 +1345,13 @@ document.querySelectorAll('.pin-wrapper').forEach(pin => {
   });
 });
 
+
+function closeMobileDetail() {
+  document.getElementById('detailPanel').classList.remove('mobile-active');
+}
 </script>
 
+<div class="map-dim" id="mapDim"></div>
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
   <div class="mobile-nav-inner">
